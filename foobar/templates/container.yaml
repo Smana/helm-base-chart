@@ -1,0 +1,1 @@
+{{ include "common.container" ( dict "top" $ "image" .Values.foobar.web.image "overrides" "foobar.web.container" ) }}

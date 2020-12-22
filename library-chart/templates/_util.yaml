@@ -1,0 +1,42 @@
+{{- /*
+mylibchart.util.merge will merge two YAML templates and output the result.
+This takes an array of three values:
+- the top context
+- the template name of the overrides (destination)
+- the template name of the base (source)
+*/}}
+{{- define "common.util.merge" -}}
+{{- $top := first . -}}
+{{- $overrides := fromYaml (include (index . 1) $top) | default (dict ) -}}
+{{- $tpl := fromYaml (include (index . 2) $top) | default (dict ) -}}
+{{- toYaml (merge $overrides $tpl) -}}
+{{- end -}}
+
+{{- /*
+leo.util.merge will merge two YAML templates and output the result.
+This takes a dict (map) of 2 or 3 entries:
+- "top" (mandatory): the top context
+- "default" (mandatory): the name of the default template
+- "overrides" (optional): the name of the template with the overrides - or a list of names
+*/ -}}
+{{- define "common.util.mergeMap" -}}
+{{- $ := get . "top" | default $ -}}
+{{- $ctx := . -}}
+{{- $default := fromYaml (include (get . "default") .) | default dict -}}
+{{- $tpl := $default -}}
+{{- if hasKey . "overrides" -}}
+  {{- if (kindIs "string" (get . "overrides")) -}}
+    {{- $overrides := fromYaml (include (get . "overrides") .) | default dict -}}
+    {{- $tpl = mergeOverwrite $default $overrides -}}
+  {{- else -}}
+    {{- $overrides := get . "overrides" | default list -}}
+    {{- range $overrides -}}
+      {{- $tplOverrides := fromYaml (include . $ctx) | default dict -}}
+      {{- $tpl = mergeOverwrite $tpl $tplOverrides -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- with $tpl -}}
+  {{- toYaml . -}}
+{{- end -}}
+{{- end -}}

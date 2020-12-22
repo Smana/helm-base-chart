@@ -1,0 +1,29 @@
+{{- define "foobar.web.container" -}}
+ports:
+  - name: "http"
+    port: 80
+resources:
+  limits:
+    cpu: "1"
+    memory: 5Mi
+livenessProbe:
+  httpGet:
+    path: /
+    port: 80
+readinessProbe:
+  httpGet:
+    path: /
+    port: 80
+{{- end -}}
+
+{{- template "common.deployment" ( dict "top" $ "overrides" "foobar.deployment" ) -}}
+
+{{- define "foobar.deployment" -}}
+{{- $ := get . "top" | default $ -}}
+spec:
+  template:
+    spec:
+      containers:
+      -
+      {{ include "common.container" ( dict "top" $ "image" $.Values.foobar.web.image "overrides" "foobar.web.container" ) | indent 12}}
+{{- end -}}
